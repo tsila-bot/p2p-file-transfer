@@ -1,0 +1,15 @@
+{
+  "name": "p2p-file-transfer-shared",
+  "version": "1.0.0",
+  "description": "Types partagés entre frontend et backend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sentTransfers     Transfer[] @relation("Sender")
+  receivedTransfers Transfer[] @relation("Receiver")
+  peerConnections   PeerConnection[]
+
+  @@map("users")
+}
+
+model Transfer {
+  id             String        @id @default(cuid())
+  fileName       String
+  fileSize       BigInt
+  fileMimeType   String
+  totalChunks    Int
+  completedChunks Int          @default(0)
+  status         TransferStatus @default(PENDING)
+  encryptionKey  String
+  integrityHash  String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Foreign keys
+  senderId   String
+  receiverId String
+
+  // Relations
+  sender   User    @relation("Sender", fields: [senderId], references: [id])
+  receiver User    @relation("Receiver", fields: [receiverId], references: [id])
+  chunks   Chunk[]
+
+  @@map("transfers")
+}
+
+model Chunk {
+  id                String            @id @default(cuid())
+  chunkIndex        Int
+  hash              String
+  isCompressed      Boolean           @default(false)
+  compressionMethod CompressionMethod @default(NONE)
+  createdAt         DateTime          @default(now())
+
+  // Foreign key
+  transferId String
+
+  // Relations
+  transfer Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+
+  @@unique([transferId, chunkIndex])
+  @@map("chunks")
+}
+
+model PeerConnection {
+  id           String     @id @default(cuid())
+  peerId       String     @unique
+  socketId     String?
+  status       PeerStatus @default(OFFLINE)
+  ipAddress    String?
+  isOnline     Boolean    @default(false)
+  lastSeen     DateTime   @default(now())
+  capabilities Json?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Foreign key
+  userId String
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("peer_connections")
+}
+
+enum TransferStatus {
+  PENDING
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PeerStatus {
+  ONLINE
+  OFFLINE
+  BUSY
+  AVAILABLE
+}
+
+enum CompressionMethod {
+  NONE
+  GZIP
+  BROTLI
+}

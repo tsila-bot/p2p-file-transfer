@@ -8,20 +8,10 @@
     "shared"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "build": "npm run build:shared && npm run build:backend && npm run build:frontend",
-    "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && npm run build",
-    "build:shared": "cd shared && npm run build",
-    "test": "npm run test:backend && npm run test:frontend",
-    "test:backend": "cd backend && npm test",
-    "test:frontend": "cd frontend && npm test",
-    "clean": "npm run clean:frontend && npm run clean:backend && npm run clean:shared",
-    "clean:frontend": "cd frontend && rm -rf .next node_modules",
-    "clean:backend": "cd backend && rm -rf dist node_modules",
-    "clean:shared": "cd shared && rm -rf dist node_modules",
+    "dev": "concurrently \"npm run --workspace backend dev\" \"npm run --workspace frontend dev\"",
+    "build": "npm run --workspace shared build && npm run --workspace backend build && npm run --workspace frontend build",
+    "test": "npm run --workspace backend test && npm run --workspace frontend test",
+    "clean": "npm run --workspace frontend clean && npm run --workspace backend clean && npm run --workspace shared clean",
     "setup": "./scripts/setup.sh"
   },
   "devDependencies": {

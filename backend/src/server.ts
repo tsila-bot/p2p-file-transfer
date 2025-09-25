@@ -1,12 +1,12 @@
-// backend/src/server.ts 
-import Fastify from "fastify";
-import cors from "@fastify/cors";
-import jwt from "@fastify/jwt";
-import { PrismaClient } from "@prisma/client";
-import { createServer } from "http";
-import { Server as SocketServer } from "socket.io";
-import dotenv from "dotenv";
-import bcrypt from "bcryptjs"; 
+// backend/src/server.ts
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import jwt from '@fastify/jwt';
+import { PrismaClient } from '@prisma/client';
+import { createServer } from 'http';
+import { Server as SocketServer } from 'socket.io';
+import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -17,7 +17,7 @@ interface User {
   username: string;
 }
 
-declare module "@fastify/jwt" {
+declare module '@fastify/jwt' {
   interface FastifyJWT {
     payload: { userId: string };
     user: User;
@@ -27,69 +27,69 @@ declare module "@fastify/jwt" {
 // Initialisation
 const prisma = new PrismaClient();
 
-// Configuration Fastify 
+// Configuration Fastify
 const fastify = Fastify({
   logger: true, // Logger simple sans transport
 });
 
 // Plugins
 fastify.register(cors, {
-  origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
+  origin: [process.env.FRONTEND_URL || 'http://localhost:3000'],
   credentials: true,
 });
 
 fastify.register(jwt, {
-  secret: process.env.JWT_SECRET || "fallback-secret",
+  secret: process.env.JWT_SECRET || 'fallback-secret',
 });
 
 // Routes de base
-fastify.get("/health", async () => {
+fastify.get('/health', async () => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return {
-      status: "ok",
+      status: 'ok',
       timestamp: new Date().toISOString(),
-      database: "connected",
+      database: 'connected',
     };
   } catch (error) {
     return {
-      status: "error",
+      status: 'error',
       timestamp: new Date().toISOString(),
-      database: "disconnected",
+      database: 'disconnected',
     };
   }
 });
 
-// Route d'inscription 
+// Route d'inscription
 fastify.post<{
   Body: {
     username: string;
     email: string;
     password: string;
   };
-}>("/api/auth/register", async (request, reply) => {
+}>('/api/auth/register', async (request, reply) => {
   const { username, email, password } = request.body;
 
-  console.log("🔐 Registration attempt for:", email);
+  console.log('🔐 Registration attempt for:', email);
 
   try {
     // Validation basique
     if (!username || !email || !password) {
-      console.log("❌ Missing required fields");
+      console.log('❌ Missing required fields');
       return reply.status(400).send({
-        error: "All fields are required",
+        error: 'All fields are required',
       });
     }
 
     if (password.length < 6) {
-      console.log("❌ Password too short");
+      console.log('❌ Password too short');
       return reply.status(400).send({
-        error: "Password must be at least 6 characters",
+        error: 'Password must be at least 6 characters',
       });
     }
 
     // Vérifier si l'utilisateur existe déjà
-    console.log("🔍 Checking if user exists...");
+    console.log('🔍 Checking if user exists...');
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { username }],
@@ -97,18 +97,18 @@ fastify.post<{
     });
 
     if (existingUser) {
-      console.log("❌ User already exists");
+      console.log('❌ User already exists');
       return reply.status(400).send({
-        error: "User already exists",
+        error: 'User already exists',
       });
     }
 
     // Hash du mot de passe
-    console.log("🔒 Hashing password...");
+    console.log('🔒 Hashing password...');
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Créer l'utilisateur
-    console.log("💾 Creating user in database...");
+    console.log('💾 Creating user in database...');
     const user = await prisma.user.create({
       data: {
         username,
@@ -118,10 +118,10 @@ fastify.post<{
     });
 
     // Générer le JWT
-    console.log("🎫 Generating JWT token...");
+    console.log('🎫 Generating JWT token...');
     const token = fastify.jwt.sign({ userId: user.id });
 
-    console.log("✅ User registered successfully:", user.username);
+    console.log('✅ User registered successfully:', user.username);
 
     return {
       user: {
@@ -132,67 +132,67 @@ fastify.post<{
       token,
     };
   } catch (error) {
-    console.error("❌ Registration error:", error);
+    console.error('❌ Registration error:', error);
     fastify.log.error(error);
     return reply.status(500).send({
-      error: "Internal server error",
+      error: 'Internal server error',
     });
   }
 });
 
-// Route de connexion 
+// Route de connexion
 fastify.post<{
   Body: {
     email: string;
     password: string;
   };
-}>("/api/auth/login", async (request, reply) => {
+}>('/api/auth/login', async (request, reply) => {
   const { email, password } = request.body;
 
-  console.log("🔐 Login attempt for:", email);
+  console.log('🔐 Login attempt for:', email);
 
   try {
     // Validation basique
     if (!email || !password) {
-      console.log("❌ Missing email or password");
+      console.log('❌ Missing email or password');
       return reply.status(400).send({
-        error: "Email and password are required",
+        error: 'Email and password are required',
       });
     }
 
     // Trouver l'utilisateur
-    console.log("🔍 Looking for user in database...");
+    console.log('🔍 Looking for user in database...');
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      console.log("❌ User not found");
+      console.log('❌ User not found');
       return reply.status(401).send({
-        error: "Invalid credentials",
+        error: 'Invalid credentials',
       });
     }
 
-    console.log("✅ User found:", user.username);
+    console.log('✅ User found:', user.username);
 
     // Vérifier le mot de passe
-    console.log("🔒 Verifying password...");
+    console.log('🔒 Verifying password...');
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-      console.log("❌ Invalid password");
+      console.log('❌ Invalid password');
       return reply.status(401).send({
-        error: "Invalid credentials",
+        error: 'Invalid credentials',
       });
     }
 
-    console.log("✅ Password valid");
+    console.log('✅ Password valid');
 
     // Générer le JWT
-    console.log("🎫 Generating JWT token...");
+    console.log('🎫 Generating JWT token...');
     const token = fastify.jwt.sign({ userId: user.id });
 
-    console.log("✅ Login successful for:", user.username);
+    console.log('✅ Login successful for:', user.username);
 
     return {
       user: {
@@ -203,10 +203,10 @@ fastify.post<{
       token,
     };
   } catch (error) {
-    console.error("❌ Login error:", error);
+    console.error('❌ Login error:', error);
     fastify.log.error(error);
     return reply.status(500).send({
-      error: "Internal server error",
+      error: 'Internal server error',
     });
   }
 });
@@ -215,8 +215,8 @@ fastify.post<{
 const server = createServer();
 const io = new SocketServer(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: ["GET", "POST"],
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST'],
   },
 });
 
@@ -230,11 +230,11 @@ const activePeers = new Map<
   }
 >();
 
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
 
   // Authentification du socket
-  socket.on("authenticate", async (token: string) => {
+  socket.on('authenticate', async (token: string) => {
     try {
       const decoded = fastify.jwt.verify(token) as { userId: string };
       const user = await prisma.user.findUnique({
@@ -252,7 +252,7 @@ io.on("connection", (socket) => {
         socket.join(`user-${user.id}`);
 
         // Notifier les autres peers
-        socket.broadcast.emit("peer-online", {
+        socket.broadcast.emit('peer-online', {
           peerId: socket.id,
           username: user.username,
           userId: user.id,
@@ -263,30 +263,30 @@ io.on("connection", (socket) => {
           (peer) => peer.socketId !== socket.id
         );
 
-        socket.emit("peers-list", peers);
+        socket.emit('peers-list', peers);
 
         console.log(`User authenticated: ${user.username}`);
       }
     } catch (error) {
-      console.log("Authentication failed:", error);
+      console.log('Authentication failed:', error);
       socket.disconnect();
     }
   });
 
   // Signaling pour WebRTC
-  socket.on("webrtc-signal", (data: { targetPeerId: string; signal: any }) => {
-    socket.to(data.targetPeerId).emit("webrtc-signal", {
+  socket.on('webrtc-signal', (data: { targetPeerId: string; signal: any }) => {
+    socket.to(data.targetPeerId).emit('webrtc-signal', {
       fromPeerId: socket.id,
       signal: data.signal,
     });
   });
 
   // Déconnexion
-  socket.on("disconnect", () => {
+  socket.on('disconnect', () => {
     const peer = activePeers.get(socket.id);
     if (peer) {
       activePeers.delete(socket.id);
-      socket.broadcast.emit("peer-offline", {
+      socket.broadcast.emit('peer-offline', {
         peerId: socket.id,
         userId: peer.userId,
       });
@@ -299,10 +299,10 @@ io.on("connection", (socket) => {
 async function start() {
   try {
     // Démarrer Fastify
-    const port = parseInt(process.env.PORT || "3001");
+    const port = parseInt(process.env.PORT || '3001');
     await fastify.listen({
       port: port,
-      host: "0.0.0.0",
+      host: '0.0.0.0',
     });
 
     console.log(`🚀 API Server listening on port ${port}`);
@@ -313,7 +313,7 @@ async function start() {
       console.log(`🔌 Socket.IO server listening on port ${socketPort}`);
     });
 
-    console.log("✅ Backend servers started successfully");
+    console.log('✅ Backend servers started successfully');
   } catch (error) {
     fastify.log.error(error);
     process.exit(1);
@@ -321,8 +321,8 @@ async function start() {
 }
 
 // Gestion de l'arrêt propre
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, shutting down gracefully");
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
   await prisma.$disconnect();
   process.exit(0);
 });

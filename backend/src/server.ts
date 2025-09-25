@@ -1,4 +1,4 @@
-// backend/src/server.ts - Version corrigée
+// backend/src/server.ts 
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client";
 import { createServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import dotenv from "dotenv";
-import bcrypt from "bcryptjs"; // Ajouter cette ligne
+import bcrypt from "bcryptjs"; 
 
 dotenv.config();
 
@@ -27,7 +27,7 @@ declare module "@fastify/jwt" {
 // Initialisation
 const prisma = new PrismaClient();
 
-// Configuration Fastify simplifiée pour éviter l'erreur pino-pretty
+// Configuration Fastify 
 const fastify = Fastify({
   logger: true, // Logger simple sans transport
 });
@@ -60,7 +60,7 @@ fastify.get("/health", async () => {
   }
 });
 
-// Route d'inscription - version corrigée
+// Route d'inscription 
 fastify.post<{
   Body: {
     username: string;
@@ -140,7 +140,7 @@ fastify.post<{
   }
 });
 
-// Route de connexion - version corrigée
+// Route de connexion 
 fastify.post<{
   Body: {
     email: string;
